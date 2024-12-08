@@ -2,3 +2,5 @@ pandas
 torch
 nltk
 contractions
+numpy
+scikit-learn
