@@ -11,10 +11,46 @@ from tqdm import tqdm
 MAX_LENGTH = 220
 BATCH_SIZE = 32
 
+def split_dataframe(df, toxicity_threshold=0.5, val_size=0.05):
+    """
+    Split the dataframe into training and validation sets. The split is done such that the validation set will contain an 30% toxic and 70% non-toxic samples. The remaining samples will be assigned to the training set. Ideally we wanted 50% in each, but the total count of toxic comments is too less so there wouldn't be enough left in the training set.
+
+    Parameters
+    ----------
+    df : The dataframe to split
+    toxicity_threshold : The threshold for determining whether a comment is toxic (default: 0.5)
+    val_size : The proportion of the dataframe to assign to the validation set (default: 0.1)
+
+    Returns
+    -------
+    tuple
+        A tuple of dataframes, where the first element is the training set and the second element is the validation set
+    """
+    df = df.dropna(subset=['comment_text'])
+    df['is_toxic'] = df['target'] >= toxicity_threshold
+    toxic_comments = df[df['is_toxic'] == True]
+    non_toxic_comments = df[df['is_toxic'] == False]
+
+    # Determine the number of toxic comments for validation set
+    toxic_count = int(len(df) * val_size * 0.3)
+    non_toxic_count = int(len(df) * val_size * 0.7)
+
+    print(toxic_count, len(toxic_comments))
+
+    # Sample toxic and non-toxic comments for validation
+    toxic_set = toxic_comments.sample(n=toxic_count, random_state=42)
+    non_toxic_set = non_toxic_comments.sample(n=non_toxic_count, random_state=42)
+
+    validation_df = pd.concat([toxic_set, non_toxic_set])
+    train_df = df.drop(validation_df.index)
+
+    return train_df, validation_df
+
+
 class JigsawDataset(Dataset):
     def __init__(self, comments, labels, glove_vocab, max_length):
         self.texts = comments.tolist()
-        self.labeAls = labels.tolist()
+        self.labels = labels.tolist()
         self.glove_vocab = glove_vocab
         self.max_length = max_length
         self.tokenizer = WhitespaceTokenizer()
@@ -60,6 +96,17 @@ class JigsawDataset(Dataset):
 
 # Load GloVe vocabulary
 def load_glove_vocab(filepath='../data/glove.6B/glove.6B.50d.txt'):
+    """
+    Loads GloVe embeddings from a file and returns a vocabulary dictionary and embeddings tensor.
+
+    Args:
+        filepath (str): Path to the GloVe file. Defaults to '../data/glove.6B/glove.6B.50d.txt'.
+
+    Returns:
+        tuple: A tuple containing:
+            - glove_vocab (dict): A dictionary mapping words to their index in the embeddings.
+            - embeddings (torch.Tensor): A tensor of word vectors including special tokens <pad> and <unk>.
+    """
     glove_vocab = {}
     embeddings = []
     with open(filepath, 'r', encoding='utf-8') as f:
