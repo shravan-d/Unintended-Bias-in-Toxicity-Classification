@@ -7,6 +7,7 @@ class ToxicityClassifierLSTM(nn.Module):
         super(ToxicityClassifierLSTM, self).__init__()
         vocab_size, embedding_dim = embedding_matrix.shape
         self.embedding = nn.Embedding.from_pretrained(embedding_matrix, freeze=True)
+        self.dropout = nn.Dropout1d(0.3)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout if dropout is not None else 0)
         self.lstm_layer_1 = nn.LSTM(embedding_dim, hidden_dim, bidirectional=True, batch_first=True)
         self.lstm_layer_2 = nn.LSTM(hidden_dim * 2, hidden_dim, bidirectional=True, batch_first=True)
@@ -17,6 +18,7 @@ class ToxicityClassifierLSTM(nn.Module):
 
     def forward(self, x):
         embedded = self.embedding(x)
+        embedded = self.dropout(embedded)
         
         lstm_out, _ = self.lstm_layer_1(embedded)
         lstm_out, _ = self.lstm_layer_2(lstm_out)

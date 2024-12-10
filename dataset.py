@@ -8,10 +8,10 @@ import numpy as np
 from tqdm import tqdm
 
 
-MAX_LENGTH = 220
+MAX_WORD_LENGTH = 220
 BATCH_SIZE = 32
 
-def split_dataframe(df, toxicity_threshold=0.5, val_size=0.05):
+def split_dataframe(df, toxicity_threshold=0.4, val_size=0.05):
     """
     Split the dataframe into training and validation sets. The split is done such that the validation set will contain an 30% toxic and 70% non-toxic samples. The remaining samples will be assigned to the training set. Ideally we wanted 50% in each, but the total count of toxic comments is too less so there wouldn't be enough left in the training set.
 
@@ -35,8 +35,6 @@ def split_dataframe(df, toxicity_threshold=0.5, val_size=0.05):
     toxic_count = int(len(df) * val_size * 0.3)
     non_toxic_count = int(len(df) * val_size * 0.7)
 
-    print(toxic_count, len(toxic_comments))
-
     # Sample toxic and non-toxic comments for validation
     toxic_set = toxic_comments.sample(n=toxic_count, random_state=42)
     non_toxic_set = non_toxic_comments.sample(n=non_toxic_count, random_state=42)
@@ -48,7 +46,7 @@ def split_dataframe(df, toxicity_threshold=0.5, val_size=0.05):
 
 
 class JigsawDataset(Dataset):
-    def __init__(self, comments, labels, glove_vocab, max_length):
+    def __init__(self, comments, labels, glove_vocab, max_length=MAX_WORD_LENGTH):
         self.texts = comments.tolist()
         self.labels = labels.tolist()
         self.glove_vocab = glove_vocab
@@ -131,7 +129,7 @@ def main():
     glove_vocab, embedding_matrix = load_glove_vocab('data/glove.6B/glove.6B.100d.txt') #TODO: Tune for optimal distance (50, 100, 200, 300)
 
     # Define dataset and DataLoader
-    dataset = JigsawDataset(df['comment_text'], df['target'], glove_vocab, max_length=MAX_LENGTH)
+    dataset = JigsawDataset(df['comment_text'], df['target'], glove_vocab, max_length=MAX_WORD_LENGTH)
     dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
     # Check DataLoader
