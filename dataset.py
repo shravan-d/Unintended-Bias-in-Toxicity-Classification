@@ -4,8 +4,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from nltk.tokenize import word_tokenize, WhitespaceTokenizer
 from contractions import fix
-import numpy as np
-from tqdm import tqdm
+import os
 
 
 MAX_WORD_LENGTH = 220
@@ -46,12 +45,14 @@ def split_dataframe(df, toxicity_threshold=0.4, val_size=0.05):
 
 
 class JigsawDataset(Dataset):
-    def __init__(self, comments, labels, glove_vocab, max_length=MAX_WORD_LENGTH):
-        self.texts = comments.tolist()
-        self.labels = labels.tolist()
+    def __init__(self, comments, labels, glove_vocab, max_length=MAX_WORD_LENGTH, only_predict=False):
         self.glove_vocab = glove_vocab
         self.max_length = max_length
         self.tokenizer = WhitespaceTokenizer()
+        if only_predict:
+            return
+        self.texts = comments.tolist()
+        self.labels = labels.tolist()
         self.processed_texts = [self._preprocess(text) for text in self.texts]
 
     def _preprocess(self, text):
@@ -105,6 +106,9 @@ def load_glove_vocab(filepath='../data/glove.6B/glove.6B.50d.txt'):
             - glove_vocab (dict): A dictionary mapping words to their index in the embeddings.
             - embeddings (torch.Tensor): A tensor of word vectors including special tokens <pad> and <unk>.
     """
+    if not os.path.exists(filepath):
+        raise FileNotFoundError('Glove Embeddings file not found in data dir')
+
     glove_vocab = {}
     embeddings = []
     with open(filepath, 'r', encoding='utf-8') as f:
