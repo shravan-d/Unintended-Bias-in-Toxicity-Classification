@@ -4,6 +4,7 @@ nltk
 contractions
 numpy
 scikit-learn
+transformers
 # For visualizations
 seaborn
 matplotlib

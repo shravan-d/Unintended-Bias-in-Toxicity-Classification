@@ -3,9 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Not adding the data files to github
-data/*
-
 # C extensions
 *.so
 
