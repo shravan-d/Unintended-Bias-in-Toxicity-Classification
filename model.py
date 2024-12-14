@@ -81,7 +81,7 @@ class EnsembleClassifier(nn.Module):
         device : torch.device
             The device on which the models are loaded.
         """
-        super(ToxicityClassifierLSTM, self).__init__()
+        super(EnsembleClassifier, self).__init__()
         self.glove_vocab, glove_embeddings = load_glove_vocab('data/glove.6B/glove.6B.100d.txt')
         self.lstm = ToxicityClassifierLSTM(
             embedding_matrix=glove_embeddings,
