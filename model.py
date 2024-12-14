@@ -2,7 +2,8 @@ import torch
 import numpy as np
 import torch.nn as nn
 from torch.nn import functional as F
-from dataset import JigsawDataset, load_glove_vocab, MAX_WORD_LENGTH
+from dataset import JigsawDataset, load_glove_vocab, MAX_WORD_LENGTH, clean_text_for_roberta
+from transformers import RobertaTokenizer, RobertaForSequenceClassification
 
 class ToxicityClassifierLSTM(nn.Module):
     def __init__(self, embedding_matrix, hidden_dim, output_dim, num_layers, dropout=None):
@@ -40,7 +41,7 @@ class ToxicityClassifierLSTM(nn.Module):
 
 
 def loadModel(model_name, checkpoints_dir, DEVICE):
-    glove_vocab = None
+    glove_vocab, tokenizer = None, None
     if model_name == 'lstm':
         glove_vocab, glove_embeddings = load_glove_vocab('data/glove.6B/glove.6B.100d.txt')
         model = ToxicityClassifierLSTM(
@@ -51,15 +52,18 @@ def loadModel(model_name, checkpoints_dir, DEVICE):
         )
         model.load_state_dict(torch.load(f'{checkpoints_dir}/LSTM.pth', weights_only=False, map_location=DEVICE))
         model = model.to(DEVICE)
-    
+    elif model_name == 'roberta':
+        tokenizer = RobertaTokenizer.from_pretrained('roberta-base')
+        model = RobertaForSequenceClassification.from_pretrained(checkpoints_dir)
+        model = model.to(DEVICE)
 
-    return model, glove_vocab
+    return model, glove_vocab, tokenizer
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def predictLSTM(sentence, model, DEVICE, vocab):
+def predict_LSTM(sentence, model, DEVICE, vocab):
     model = model.to(DEVICE)
 
     dataset = JigsawDataset([], [], vocab, only_predict=True)
@@ -77,16 +81,31 @@ def predictLSTM(sentence, model, DEVICE, vocab):
     return sigmoid(predictions[0].detach().cpu().numpy())
 
 
+def predict_roberta(sentence, model, DEVICE, tokenizer):
+    model = model.to(DEVICE)
+    
+    sentence = clean_text_for_roberta(sentence)
+    tokens = tokenizer([sentence], truncation=True, padding=True, max_length=200, return_tensors='pt')
+    input_tokens = tokens['input_ids']
+    attention_mask = tokens['attention_mask']
+    
+    input_tokens, attention_mask = input_tokens.to(DEVICE), attention_mask.to(DEVICE)
+    predictions = model(input_tokens, attention_mask=attention_mask).logits.squeeze(0)
 
-def predict(sentence, model_name, model, DEVICE, vocab=None):
+    return predictions[0].detach().cpu().numpy()
+
+
+def predict(sentence, model_name, model, DEVICE, vocab=None, tokenizer=None):
     if model_name == 'lstm':
-        result = predictLSTM(sentence, model, DEVICE, vocab)
+        result = predict_LSTM(sentence, model, DEVICE, vocab)
+    elif model_name == 'roberta':
+        result = predict_roberta(sentence, model, DEVICE, tokenizer)
     
     if result > 0.98:
         return "I can't believe you tried that", result
     if result > 0.8:
         return 'Severely Toxic', result
-    if result > 0.4:
+    if result > 0.5:
         return 'Toxic', result
     if result > 0.2:
         return "Not too bad, but ummmmmm", result

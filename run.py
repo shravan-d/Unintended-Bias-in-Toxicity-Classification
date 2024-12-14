@@ -11,10 +11,8 @@ parser.add_argument("--checkpoint_dir", type=str, required=False, default='check
 if __name__ == "__main__":
     args = parser.parse_args()
     
-    # Load model
     print(f"Loading {args.model} model from {args.checkpoint_dir}...")
-
-    model, vocab = loadModel(args.model, args.checkpoint_dir, args.device)
+    model, vocab, tokenizer = loadModel(args.model, args.checkpoint_dir, args.device)
     
     while True:
         sentence = input("\nEnter a sentence, or type 'exit' to quit: ").strip()
@@ -26,6 +24,6 @@ if __name__ == "__main__":
             print("No input received. Please type a sentence.")
             continue
 
-        predicted_class, probabilities = predict(sentence, args.model, model, args.device, vocab)
+        predicted_class, probabilities = predict(sentence, args.model, model, args.device, vocab, tokenizer)
         
         print(f"{predicted_class} with probability {probabilities:.2f}")

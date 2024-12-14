@@ -93,6 +93,12 @@ class JigsawDataset(Dataset):
         return torch.tensor(indices, dtype=torch.long), label
 
 
+def clean_text_for_roberta(text):
+    text = text.lower()
+    text = re.sub(r'[^\w\s]', '', text)
+    # Do not remove stop words to leave more context for Roberta
+    return text
+
 # Load GloVe vocabulary
 def load_glove_vocab(filepath='../data/glove.6B/glove.6B.50d.txt'):
     """
