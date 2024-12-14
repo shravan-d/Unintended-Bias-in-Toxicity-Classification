@@ -46,6 +46,20 @@ def split_dataframe(df, toxicity_threshold=0.4, val_size=0.05):
 
 class JigsawDataset(Dataset):
     def __init__(self, comments, labels, glove_vocab, max_length=MAX_WORD_LENGTH, only_predict=False):
+        """
+        Parameters
+        ----------
+        comments : pandas Series or list
+            The comments
+        labels : pandas Series or list
+            The labels
+        glove_vocab : dict
+            The glove vocabulary
+        max_length : int
+            The maximum length of the processed text
+        only_predict : bool
+            Whether to only create the dataset for prediction (no labels)
+        """
         self.glove_vocab = glove_vocab
         self.max_length = max_length
         self.tokenizer = WhitespaceTokenizer()

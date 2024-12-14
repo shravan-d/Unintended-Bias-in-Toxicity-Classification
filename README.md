@@ -13,11 +13,13 @@ cd toxicity-detection-bias-mitigation
 pip install -r requirements.txt
 ```
 
-3. Ensure you have the model checkpoints in a checkpoints directory in the root of the project. If not, download the files from this link: [Drive](https://drive.google.com/drive/folders/1YbqEKaYfCv2DSQ-axub6Q3Sia-UcWOqZ), create a directory called checkpoints in the root, and place the files there.
+3. Download the required embeddings and model checkpoints from the following link: [Drive](https://drive.google.com/drive/folders/1YbqEKaYfCv2DSQ-axub6Q3Sia-UcWOqZ).
 
-4. Download the glove embeddings from this link [Drive](https://drive.google.com/drive/folders/1YbqEKaYfCv2DSQ-axub6Q3Sia-UcWOqZ), and place them in data/glove.6B
+4. Move the 'LSTM.pth', 'model.safetensors', and 'config.json' into a folder called 'checkpoints' in the root.
 
-5. To classify sentences, run the script and input your sentences one by one.
+5. Move the 'glove.6B.100d.txt' file into data/glove.6B.
+
+6. To classify sentences, run the script and input your sentences one by one.
 ```
 python run.py --model_name ensemble
 ```
