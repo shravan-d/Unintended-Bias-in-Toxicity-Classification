@@ -13,6 +13,28 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def train_step(model, train_loader, optimizer, criterion, device):
+    """
+    Train a ToxicityClassifierLSTM model on given data.
+
+    Parameters
+    ----------
+    model : ToxicityClassifierLSTM
+        The model to be trained.
+    train_loader : DataLoader
+        DataLoader containing the training data.
+    optimizer : torch.optim.Optimizer
+        Optimizer used to update the model parameters.
+    criterion : torch.nn.Module
+        Loss function used to evaluate the model.
+    device : torch.device
+        The device (CPU or GPU) on which the model is evaluated.
+
+    Returns
+    -------
+    A tuple containing:
+    - Average loss over the training dataset.
+    - Accuracy of the model on the training dataset.
+    """
     model.train()
     epoch_loss = 0
     all_preds = []
@@ -36,6 +58,21 @@ def train_step(model, train_loader, optimizer, criterion, device):
 
 
 def evaluate_step(model, test_loader, criterion, device):
+    """
+    Evaluate the model on the test data.
+
+    Args:
+        model: The model to be evaluated.
+        test_loader: DataLoader for the test dataset.
+        criterion: Loss function used to evaluate the model.
+        device: The device (CPU or GPU) on which the model is evaluated.
+
+    Returns:
+        A tuple containing:
+        - Average loss over the test dataset.
+        - Accuracy of the model on the test dataset.
+    """
+
     model.eval()
     epoch_loss = 0
     all_preds = []
@@ -56,8 +93,25 @@ def evaluate_step(model, test_loader, criterion, device):
     return epoch_loss / len(test_loader), accuracy
 
 
-def train(train_loader, test_loader, glove_embeddings):
+def train(train_loader, test_loader, glove_embeddings, epochs=5):
     # Initialize model
+    """
+    Train a ToxicityClassifierLSTM model on given data.
+
+    Parameters
+    ----------
+    train_loader : DataLoader
+        DataLoader containing the training data.
+    test_loader : DataLoader
+        DataLoader containing the test data.
+    glove_embeddings : torch.Tensor
+        Pre-trained GloVe embeddings.
+
+    Returns
+    -------
+    model : ToxicityClassifierLSTM
+        The trained model.
+    """
     model = ToxicityClassifierLSTM(
         embedding_matrix=glove_embeddings,
         hidden_dim=HIDDEN_DIM,
@@ -71,7 +125,7 @@ def train(train_loader, test_loader, glove_embeddings):
     criterion = nn.BCEWithLogitsLoss(reduction='mean') #nn.BCELoss()
 
     # Train and evaluate
-    EPOCHS = 5
+    EPOCHS = epochs
     for epoch in range(EPOCHS):
         print(f"Epoch {epoch + 1}")
         train_loss, train_acc = train_step(model, train_loader, optimizer, criterion, DEVICE)

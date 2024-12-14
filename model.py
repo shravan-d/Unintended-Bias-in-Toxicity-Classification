@@ -4,6 +4,8 @@ import torch.nn as nn
 from torch.nn import functional as F
 from dataset import JigsawDataset, load_glove_vocab, MAX_WORD_LENGTH, clean_text_for_roberta
 from transformers import RobertaTokenizer, RobertaForSequenceClassification
+from nltk.tokenize import word_tokenize, WhitespaceTokenizer
+import unittest
 
 class ToxicityClassifierLSTM(nn.Module):
     def __init__(self, embedding_matrix, hidden_dim, output_dim, num_layers, dropout=None):
@@ -265,3 +267,18 @@ def predict(sentence, model_name, model, DEVICE, vocab=None, tokenizer=None):
         return "Not too bad, but ummmmmm", result
 
     return "Not toxic", result
+
+        
+class TestLoadModel(unittest.TestCase):
+    def test_load_model(self):
+        model, vocab, tokenizer = loadModel('lstm')
+        self.assertIsInstance(model, ToxicityClassifierLSTM)
+        self.assertIsInstance(vocab, dict)
+        self.assertIsInstance(tokenizer, WhitespaceTokenizer)
+
+class TestToxicityClassifierLSTM(unittest.TestCase):
+    def test_forward(self):
+        model = ToxicityClassifierLSTM(torch.randn(10, 128), 128, 1, 2)
+        input_tensor = torch.randn(1, 220)
+        output = model(input_tensor)
+        self.assertEqual(output.shape, torch.Size([1, 1]))
